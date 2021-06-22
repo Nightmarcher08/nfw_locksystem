@@ -19,7 +19,12 @@ local vehicle
 function disableEngine()
 	Citizen.CreateThread(function()
 		while hotwiring do
-			SetVehicleEngineOn(vehicle, false, true, false)
+		SetVehicleEngineOn(vehicle, false,false,true)
+		    DisableControlAction(0, 32, true) -- W
+			DisableControlAction(0, 34, true) -- A
+			DisableControlAction(0, 31, true) -- S
+			DisableControlAction(0, 30, true) -- D
+			DisableControlAction(0, 74, true)  -- Lights
 			if not hotwiring then
 				break
 			end
@@ -112,11 +117,11 @@ AddEventHandler('nfwlock:onUse', function()
 		    SetVehicleDoorsLockedForAllPlayers(vehicle, false)
         ClearPedTasksImmediately(playerPed)
         TaskEnterVehicle(playerPed, vehicle, 10.0, -1, 1.0, 1, 0)
+		SetVehicleEngineOn(vehicle, false, false, true)
       end
     end)			
   end
 end)	
-
 
 Citizen.CreateThread(function()
   while true do
@@ -126,7 +131,7 @@ Citizen.CreateThread(function()
     if pBreaking then
       local veh = GetVehiclePedIsIn(playerPed, false)
       local vehPos = GetWorldPositionOfEntityBone(veh, GetEntityBoneIndexByName(veh, "bonnet"))
-      if IsPedInAnyVehicle(playerPed, false) then
+      if IsPedInAnyVehicle(playerPed, false) and helptext == 1 then
         DrawText3Ds(vehPos.x, vehPos.y, vehPos.z, "Press [H] to hotwire")
         if IsControlJustPressed(0, 304) then
           SetVehicleNeedsToBeHotwired(veh, true)
@@ -139,21 +144,31 @@ end)
 
 function hotWire(vehicle)
   if IsVehicleNeedsToBeHotwired(vehicle) then
+  local time = 12500 -- in ms
     disableEngine()
     hotwiring = true
     pBreaking = false
     loadAnimDict(animDict)
     ClearPedTasks(player_entity)
-    TaskPlayAnim(player_entity, animDict, anim, 3.0, 1.0, 2000, flags, -1, 0, 0, 0)
     if hotwiring then
-      exports['progressBars']:startUI(Time, "Hotwiring Vehicle...")
-      Citizen.Wait(Time+500)
+	exports['progressBars']:startUI(time, "Hotwiring [Stage 1]")
+    TaskPlayAnim(PlayerPedId(), "veh@std@ds@base", "hotwire", 8.0, 8.0, -1, 1, 0.3, true, true, true)
+    Citizen.Wait(time)
+    Wait(1000)
+    exports['progressBars']:startUI(time, "Hotwiring [Stage 2]")
+    TaskPlayAnim(PlayerPedId(), "veh@std@ds@base", "hotwire", 8.0, 8.0, -1, 1, 0.6, true, true, true)
+    Citizen.Wait(time)
+    Wait(1000)
+    exports['progressBars']:startUI(time, "Hotwiring [Stage 3]")
+    TaskPlayAnim(PlayerPedId(), "veh@std@ds@base", "hotwire", 8.0, 8.0, -1, 1, 0.4, true, true, true)
+    Citizen.Wait(time)
+    Wait(1000)
+	StopAnimTask(PlayerPedId(), 'veh@std@ds@base', 'hotwire', 1.0)
+	hotwiring = false
     end
-    hotwiring = false
-    StopAnimTask(player_entity, animDict, anim, 1.0)
-    Citizen.Wait(1000)
+	Citizen.Wait(1000)
     TriggerEvent('EngineToggle:Engine')
-    SetVehicleJetEngineOn(vehicle, true)
+	exports['mythic_notify']:DoHudText('success', 'Engine turned on!')
     RemoveAnimDict(animDict)
     if not Radio then
       SetVehicleRadioEnabled(vehicle, false)
@@ -233,6 +248,7 @@ Citizen.CreateThread(function()
 				-- Set lucky if conductor door is open
 				if doorAngle > 0.0 then
 					lucky = true
+					helptext = 1
 				end
 			
 				-- check if vehicle is in blacklist
