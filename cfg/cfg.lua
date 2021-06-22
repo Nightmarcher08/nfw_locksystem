@@ -1,8 +1,8 @@
 cfg = {}
 
-cfg.chance = 0 -- chance of being unlocked in percentage
+cfg.chance = 30 -- chance of being unlocked in percentage
 cfg.infinite = false -- Determines if lock picks have infinite uses
-cfg.alarmPercent = 100 -- Percentage of alarm going off and cops being alerted
+cfg.alarmPercent = 50 -- Percentage of alarm going off and cops being alerted
 
 cfg.blacklist = { -- vehicles that will always be locked when spawned naturally
   "T20",
